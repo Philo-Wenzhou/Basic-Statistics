@@ -72,6 +72,7 @@
 - dplyr：数据处理和转换
 - tidyr：数据重塑
 - patchwork：组合多个图表
+- ggridges：创建脊线图
 - ggthemes：提供额外的图表主题
 - plotly：创建交互式图表
 - htmlwidgets：保存交互式图表
@@ -99,4 +100,4 @@
 
 ## 反馈与建议
 
-如有任何问题、建议或反馈，请随时联系作者。# Basic-Statistics
+如有任何问题、建议或反馈，请随时联系作者。

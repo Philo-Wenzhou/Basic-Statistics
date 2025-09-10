@@ -1,31 +1,83 @@
 ---
  title: "生存分析教程与数学原理详解"
- author: "Wenxing Yi"
+ author: "Philo"
  date: "`r Sys.Date()`"
  output: 
    html_document:
-     code_folding: show
      toc: true
-     toc_float: true
-     theme: cosmo
+     toc_depth: 3
+     toc_float:
+       collapsed: false
+       smooth_scroll: true
+     number_sections: false
+     code_folding: "hide"
+     theme: flatly
      highlight: tango
      css: styles.css
 ---
 
 ```{r setup, include=FALSE}
-# 全局设置
-knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+# 设置全局参数
+knitr::opts_chunk$set(
+  echo = TRUE, 
+  message = FALSE, 
+  warning = FALSE, 
+  fig.width = 8, 
+  fig.height = 6, 
+  fig.align = "center", 
+  dpi = 300,
+  # 设置输出目录
+  fig.path = "output/",
+  # 设置图片格式为PNG
+  dev = function(filename, width, height, ...) {
+    png(filename = filename, width = width, height = height, res = 300, units = "in", ...)
+  },
+  # 设置表格格式为三线表
+  results = "asis"
+)
 
-# 确保中文字体正确显示
+# 设置表格输出格式
+options(knitr.kable.NA = '', knitr.table.format = "markdown")
+
+# 安装必要的R包
+if (!require(survival)) install.packages("survival")  # 核心生存分析包
+if (!require(survminer)) install.packages("survminer")  # 生存分析可视化
+if (!require(ggplot2)) install.packages("ggplot2")    # 数据可视化
+if (!require(dplyr)) install.packages("dplyr")        # 数据处理
+if (!require(tidyr)) install.packages("tidyr")        # 数据整理
+
+# 加载R包
+suppressPackageStartupMessages(library(survival))
+suppressPackageStartupMessages(library(survminer))
+suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(dplyr))
+suppressPackageStartupMessages(library(tidyr))
+# 设置中文字体支持
 if (.Platform$OS.type == "windows") {
   windowsFonts("SimHei" = windowsFont("SimHei"))
   theme_set(theme_grey(base_family = "SimHei"))
 } else if (.Platform$OS.type == "unix") {
   theme_set(theme_grey(base_family = "WenQuanYi Micro Hei"))
 }
+
+# 创建自定义主题
+theme_survival <- function() {
+  theme_bw() +
+    theme(
+      plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+      plot.subtitle = element_text(size = 14, hjust = 0.5),
+      axis.title = element_text(size = 14),
+      axis.text = element_text(size = 12),
+      legend.title = element_text(size = 14),
+      legend.text = element_text(size = 12),
+      strip.text = element_text(size = 12, face = "bold")
+    )
+}
 ```
 
-## 一、生存分析简介
+# 生存分析教程与数学原理详解
+
+## 生存分析简介
 
 生存分析是一种统计方法，用于分析事件发生的时间分布，特别适用于研究从开始时间到感兴趣事件（如死亡、疾病复发、设备故障等）发生的时间间隔。
 
@@ -40,11 +92,11 @@ if (.Platform$OS.type == "windows") {
 - 关注事件发生的时间分布
 - 可以同时考虑多个影响因素
 
-## 二、生存分析的数学基础
+## 生存分析的数学基础
 
-### 2.1 基本概念定义
+### 基本概念定义
 
-在生存分析中，我们需要理解以下几个核心概念：
+在生存分析中，需要理解以下几个核心概念：
 
 1. **生存时间（Survival Time）**：从起始事件到感兴趣事件发生的时间间隔，通常用符号 \( T \) 表示。
 
@@ -66,7 +118,7 @@ if (.Platform$OS.type == "windows") {
    
    其中 \( F(t) = P(T \leq t) \) 是累积分布函数。
 
-### 2.2 概念间的数学关系
+### 概念间的数学关系
 
 这些概念之间存在以下重要的数学关系：
 
@@ -74,7 +126,7 @@ if (.Platform$OS.type == "windows") {
 \[ h(t) = \frac{f(t)}{S(t)} \]
 \[ S(t) = \exp(-H(t)) \]
 
-### 2.3 常用分布模型
+### 常用分布模型
 
 生存分析中常用的概率分布模型包括：
 
@@ -96,7 +148,7 @@ if (.Platform$OS.type == "windows") {
 
 4. **对数 logistic分布（Log-Logistic Distribution）**：风险函数先增加后减少
 
-让我们通过R代码来直观地理解这些分布：
+让通过R代码来直观地理解这些分布：
 
 ```{r distribution_functions}
 # 定义分布函数
@@ -123,9 +175,9 @@ legend("topright", legend = c("k=0.5", "k=1", "k=2"),
 par(mfrow = c(1, 1))
 ```
 
-## 三、R包安装与加载
+## R包安装与加载
 
-在R中进行生存分析，我们需要安装并加载以下关键包：
+在R中进行生存分析，需要安装并加载以下关键包：
 
 - `survival`：核心生存分析包，提供基础函数
 - `survminer`：生存分析可视化工具
@@ -149,15 +201,15 @@ suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(tidyr))
 ```
 
-## 四、数据准备
+## 数据准备
 
-R语言提供了多个内置的生存分析数据集，我们将使用以下数据集进行演示：
+R语言提供了多个内置的生存分析数据集，将使用以下数据集进行演示：
 
 1. **lung**：肺癌患者生存数据
 2. **ovarian**：卵巢癌患者生存数据
 3. **aml**：急性髓细胞白血病患者生存数据
 
-让我们先查看这些数据集的基本结构：
+让先查看这些数据集的基本结构：
 
 ```{r data_exploration}
 # 查看lung数据集结构
@@ -180,20 +232,21 @@ lung$sex <- factor(lung$sex, levels = c(1, 2), labels = c("男性", "女性"))
 head(lung$sex)
 ```
 
-## 五、Kaplan-Meier生存曲线分析
+## Kaplan-Meier生存曲线分析
 
 Kaplan-Meier方法是生存分析中最常用的非参数方法，用于估计生存函数。该方法特别适用于处理含有删失数据的生存资料。
 
-### 5.1 Kaplan-Meier估计的数学原理
+### Kaplan-Meier估计的数学原理
 
 Kaplan-Meier估计的基本思想是利用条件概率的乘法规则来估计生存函数。对于一组按时间排序的事件时间点 \( t_1 < t_2 < ... < t_k \)，其中 \( d_i \) 是在时间 \( t_i \) 发生的事件数，\( n_i \) 是在时间 \( t_i \) 开始时的风险人数（即在 \( t_i \) 时刻仍然存活的个体数），则生存函数的Kaplan-Meier估计为：
 
-\[ \hat{S}(t) = \prod_{t_i \leq t} \left(1 - \frac{d_i}{n_i}
-ight) \]
+$$
+\hat{S}(t) = \prod_{t_i \leq t} \left(1 - \frac{d_i}{n_i}\right)
+$$
 
-### 5.2 创建生存对象
+### 创建生存对象
 
-在R中，我们首先需要创建一个生存对象（Survival Object），这是进行生存分析的基础：
+在R中，首先需要创建一个生存对象（Survival Object），这是进行生存分析的基础：
 
 ```{r create_survival_object}
 # 创建生存对象
@@ -204,9 +257,9 @@ head(surv_object)
 
 这里，`time`参数表示生存时间，`event`参数表示事件状态（通常1表示事件发生，0表示删失）。
 
-### 5.3 基础KM分析
+### 基础KM分析
 
-接下来，我们使用`survfit()`函数进行Kaplan-Meier估计：
+接下来，使用`survfit()`函数进行Kaplan-Meier估计：
 
 ```{r basic_km_analysis}
 # 进行KM估计
@@ -217,9 +270,9 @@ summary(km_fit)
 
 `survfit()`函数的第一个参数是一个公式，`~ 1`表示不考虑分组因素，即对整个样本进行估计。
 
-### 5.4 分组KM分析
+### 分组KM分析
 
-我们可以按不同的因素（如性别）对样本进行分组，比较不同组之间的生存差异：
+可以按不同的因素（如性别）对样本进行分组，比较不同组之间的生存差异：
 
 ```{r grouped_km_analysis}
 # 分组KM分析（按性别）
@@ -228,7 +281,7 @@ cat("按性别分组的KM估计结果摘要：\n")
 summary(km_fit_sex)
 ```
 
-### 5.5 绘制KM生存曲线
+### 绘制KM生存曲线
 
 使用`survminer`包中的`ggsurvplot()`函数可以绘制精美的生存曲线：
 
@@ -249,6 +302,11 @@ p1 <- ggsurvplot(
   ggtheme = theme_bw()        # 使用黑白主题
 )
 p1
+```
+**图1：肺癌患者总体Kaplan-Meier生存曲线** 该图展示了肺癌患者的整体生存情况。生存曲线随着时间的推移逐渐下降，表示患者存活到特定时间点的概率逐渐降低。风险表显示了不同时间点的风险人数。
+
+
+```{r plot_km_curve2}
 
 # 绘制分组KM曲线
 p2 <- ggsurvplot(
@@ -266,15 +324,19 @@ p2 <- ggsurvplot(
   ggtheme = theme_bw()        # 使用黑白主题
 )
 p2
+
+
 ```
+**图2：按性别分组的肺癌患者生存曲线** 该图展示了肺癌患者中男性和女性的生存曲线比较。从图中可以看出，女性患者的生存曲线整体高于男性患者，提示性别可能是影响肺癌患者预后的一个因素。图下方的风险表显示了不同时间点各组的风险人数。
 
-### 5.6 Log-rank检验
 
-Log-rank检验是比较两组或多组生存曲线差异的非参数检验方法。在上面的分组KM曲线中，我们通过`pval = TRUE`参数已经添加了Log-rank检验的结果。
+### Log-rank检验
+
+Log-rank检验是比较两组或多组生存曲线差异的非参数检验方法。在上面的分组KM曲线中，通过`pval = TRUE`参数已经添加了Log-rank检验的结果。
 
 Log-rank检验的原假设是两组的生存函数相同，备择假设是至少有一组的生存函数不同。
 
-我们也可以单独进行Log-rank检验：
+也可以单独进行Log-rank检验：
 
 ```{r log_rank_test}
 # 单独进行Log-rank检验
@@ -282,29 +344,41 @@ surv_diff <- survdiff(surv_object ~ sex, data = lung)
 surv_diff
 ```
 
-## 六、Cox比例风险模型分析
+## Cox比例风险模型分析
 
-Cox比例风险模型是生存分析中最常用的半参数回归模型，它允许我们同时考虑多个协变量对生存时间的影响。
+Cox比例风险模型是生存分析中最常用的半参数回归模型，它允许同时考虑多个协变量对生存时间的影响。
 
-### 6.1 Cox模型的数学原理
+### Cox模型的数学原理
 
-Cox比例风险模型的基本形式为：
+# Cox比例风险模型及其比例风险假设
 
-\[ h(t, \mathbf{x}) = h_0(t) \exp(\mathbf{eta}^T \mathbf{x}) \]
+## Cox比例风险模型的基本形式
+Cox比例风险模型的基本形式表示为：
 
-其中：
-- \( h(t, \mathbf{x}) \) 是具有协变量 \( \mathbf{x} \) 的个体在时间 \( t \) 的风险函数
-- \( h_0(t) \) 是基准风险函数（所有协变量取值为0时的风险函数）
-- \( \mathbf{eta} \) 是回归系数向量
-- \( \exp(\mathbf{eta}^T \mathbf{x}) \) 是风险比（Hazard Ratio）
+\[ h(t, \mathbf{x}) = h_0(t) \exp(\mathbf{\beta}^T \mathbf{x}) \]
 
-Cox模型的一个重要假设是比例风险假设（Proportional Hazards Assumption），即不同协变量组合的风险函数之比随时间保持恒定：
+其中各参数的含义如下：
+- \( h(t, \mathbf{x}) \)：具有协变量 \( \mathbf{x} \) 的个体在时间 \( t \) 时的风险函数，描述该个体在时刻 \( t \) 发生研究结局的瞬时风险；
+- \( h_0(t) \)：基准风险函数，指所有协变量取值均为0时，个体在时间 \( t \) 的风险函数，仅与时间相关，与协变量无关；
+- \( \mathbf{\beta} \)：回归系数向量，每个元素对应一个协变量的回归系数，用于衡量该协变量对风险函数的影响方向和强度；
+- \( \exp(\mathbf{\beta}^T \mathbf{x}) \)：风险比（Hazard Ratio, HR），若协变量为分类变量，可直接反映不同类别间的风险倍数关系；若为连续变量，可反映该变量每变化1个单位时风险的变化倍数。
 
-\[ \frac{h(t, \mathbf{x}_1)}{h(t, \mathbf{x}_2)} = \frac{h_0(t) \exp(\mathbf{eta}^T \mathbf{x}_1)}{h_0(t) \exp(\mathbf{eta}^T \mathbf{x}_2)} = \exp(\mathbf{eta}^T (\mathbf{x}_1 - \mathbf{x}_2)) \]
 
-### 6.2 基础Cox回归
+## 比例风险假设（Proportional Hazards Assumption）
+比例风险假设是Cox模型的核心前提假设，其核心含义为：**不同协变量组合的个体，其风险函数之比不随时间 \( t \) 变化，始终保持恒定**。
 
-在R中，我们使用`coxph()`函数拟合Cox比例风险模型：
+该假设的数学推导过程如下：
+
+\[ \frac{h(t, \mathbf{x}_1)}{h(t, \mathbf{x}_2)} = \frac{h_0(t) \exp(\mathbf{\beta}^T \mathbf{x}_1)}{h_0(t) \exp(\mathbf{\beta}^T \mathbf{x}_2)} = \exp(\mathbf{\beta}^T (\mathbf{x}_1 - \mathbf{x}_2)) \]
+
+推导逻辑说明：
+1. 分子分母中的基准风险函数 \( h_0(t) \) 可相互抵消（因 \( h_0(t) \) 与协变量无关）；
+2. 根据指数运算性质 \( \frac{\exp(a)}{\exp(b)} = \exp(a - b) \)，将指数项合并；
+3. 最终结果 \( \exp(\mathbf{\beta}^T (\mathbf{x}_1 - \mathbf{x}_2)) \) 仅与协变量差异（\( \mathbf{x}_1 - \mathbf{x}_2 \)）和回归系数向量（\( \mathbf{\beta} \)）相关，与时间 \( t \) 无关，验证了“风险比恒定”的假设。
+
+### 基础Cox回归
+
+在R中，使用`coxph()`函数拟合Cox比例风险模型：
 
 ```{r basic_cox_model}
 # 创建基础Cox模型（仅包含性别变量）
@@ -313,14 +387,14 @@ cat("基础Cox回归模型摘要：\n")
 summary(cox1)
 ```
 
-在Cox回归结果中，我们主要关注：
+在Cox回归结果中，主要关注：
 - **回归系数（coef）**：表示协变量对风险的影响方向和大小
 - **风险比（exp(coef)）**：表示协变量每增加一个单位，风险增加的倍数
 - **p值**：表示协变量的统计显著性
 
-### 6.3 多变量Cox回归
+### 多变量Cox回归
 
-我们可以在模型中包含多个协变量，进行多变量生存分析：
+可以在模型中包含多个协变量，进行多变量生存分析：
 
 ```{r multivariate_cox_model}
 # 创建包含多个协变量的Cox模型
@@ -329,9 +403,9 @@ cat("多变量Cox回归模型摘要：\n")
 summary(cox2)
 ```
 
-### 6.4 比例风险假设检验
+### 比例风险假设检验
 
-使用Cox模型前，我们需要检验比例风险假设是否满足。常用的方法是Schoenfeld残差检验：
+使用Cox模型前，需要检验比例风险假设是否满足。常用的方法是Schoenfeld残差检验：
 
 ```{r ph_test}
 # 使用Schoenfeld残差检验比例风险假设
@@ -342,11 +416,13 @@ test_ph
 # 可视化比例风险假设检验结果
 p5 <- ggcoxzph(test_ph, se = TRUE)
 p5
+
 ```
+**图3：比例风险假设检验结果** 该图展示了Cox比例风险模型的比例风险假设检验结果。图中的曲线应该大致呈水平状态，没有明显的趋势，才能支持比例风险假设。从图中可以看出，的模型基本满足比例风险假设。
 
 如果p值大于0.05，通常认为比例风险假设成立。
 
-### 6.5 森林图展示Cox回归结果
+### 森林图展示Cox回归结果
 
 森林图是展示Cox回归结果的常用可视化方法，可以直观地展示各个协变量的风险比及其置信区间：
 
@@ -355,20 +431,22 @@ p5
 p6 <- ggforest(
   cox2, 
   data = lung,
-  main = "多变量Cox回归结果森林图",
-  cpositions = c(0.02, 0.22, 0.4),
+  main = "多变量Cox回归模型的森林图",
+  cpositions = c(0.02, 0.1, 0.22),
   fontsize = 1.0,
   refLabel = "参考",
-  noDigits = 2
+  noDigits = 3
 )
 p6
+
+
 ```
+**图4：Cox比例风险模型的森林图** 该森林图展示了多变量Cox回归模型中各个协变量的风险比（HR）及其95%置信区间。森林图是展示Cox回归结果的常用方式，能够直观地显示每个协变量对生存时间的影响方向和强度。
+## 高级生存分析技术
 
-## 七、高级生存分析技术
+### 时间依变协变量
 
-### 7.1 时间依变协变量
-
-在某些情况下，协变量的值可能随时间变化，这时我们需要使用时间依变协变量模型：
+在某些情况下，协变量的值可能随时间变化，这时需要使用时间依变协变量模型：
 
 ```{r time_dependent_covariates}
 # 创建时间依变协变量的Cox模型
@@ -394,7 +472,7 @@ cat("时间依变协变量的模型设置示例：\n")
 cat("model <- coxph(Surv(start, stop, event) ~ covariate1 + covariate2, data = time_dependent_data)")
 ```
 
-### 7.2 竞争风险模型
+### 竞争风险模型
 
 在实际研究中，可能存在多种可能导致观察结束的事件（如患者可能死于其他疾病而不是研究关注的疾病），这时需要使用竞争风险模型：
 
@@ -404,15 +482,14 @@ cat("竞争风险模型的模型设置示例：\n")
 cat("cmprsk_model <- coxph(Surv(time, status) ~ covariate1 + covariate2, data = data, cluster = id)")
 ```
 
-## 八、生存分析结果的可视化展示
+## 生存分析结果的可视化展示
 
-### 8.1 组合多个生存曲线图
+### 组合多个生存曲线图
 
-我们可以组合多个生存曲线图，方便比较不同数据集或不同分组的结果：
-
-```{r combined_plots}
+可以组合多个生存曲线图，方便比较不同数据集或不同分组的结果：
+```{r aml_km_plot, echo=TRUE}
 # 准备AML数据集
-aml$group <- factor(aml$group, levels = c("Maintained", "Nonmaintained"), 
+aml$group <- factor(aml$x, levels = c("Maintained", "Nonmaintained"), 
                     labels = c("维持治疗", "非维持治疗"))
 surv_object_aml <- Surv(time = aml$time, event = aml$status)
 km_fit_aml <- survfit(surv_object_aml ~ group, data = aml)
@@ -433,26 +510,45 @@ p4 <- ggsurvplot(
   ggtheme = theme_bw()
 )
 
+p4
+```
+
+**图5：AML患者不同治疗方案的生存曲线比较** 该图比较了AML（急性髓系白血病）患者中维持治疗和非维持治疗两种方案的生存曲线。Log-rank检验的p值表明两组生存曲线差异具有统计学意义。
+```{r combined_plots}
 # 组合生存曲线图
 p_list <- list(p2, p4)
-combined_plots <- arrange_ggsurvplots(p_list, ncol = 2, nrow = 1)
-combined_plots
+arrange_ggsurvplots(p_list, ncol = 2, nrow = 1)
+
 ```
+**图6：组合生存曲线图** 该图组合了肺癌患者按性别分组的生存曲线和AML患者按治疗方案分组的生存曲线，方便直观比较不同数据集的生存分析结果。组合图对于展示多个相关分析结果非常有用。
 
-### 8.2 风险函数可视化
 
-我们可以使用`ggcoxfunctional()`函数可视化协变量与风险之间的函数关系：
+### 风险函数可视化
+
+可以使用`ggcoxfunctional()`函数可视化协变量与风险之间的函数关系：
 
 ```{r hazard_function_plot}
-# 风险函数可视化
+# 加载必要的库
+library(survival)
+library(survminer)
+
+# 处理缺失值 - 这里选择删除包含缺失值的行
+lung_clean <- na.omit(lung[, c("time", "status", "age", "ph.ecog", "ph.karno")])
+
+
+# 重新绘制风险函数图
 p8 <- ggcoxfunctional(
   Surv(time, status) ~ log(age) + sqrt(ph.ecog) + ph.karno, 
-  data = lung
+  data = lung_clean
 )
-p8
-```
 
-## 九、总结与讨论
+# 显示图形
+print(p8)
+```
+**图7：协变量与风险之间的函数关系图** 该图展示了各个协变量与风险之间的函数关系，用于评估协变量是否需要进行函数转换。图中曲线应该大致呈线性，才能支持协变量与风险之间的线性关系假设。
+
+
+## 总结与讨论
 
 本教程详细介绍了生存分析的数学原理和R语言实现，包括：
 
@@ -462,9 +558,9 @@ p8
 4. **Cox比例风险模型**：半参数回归模型，用于分析多个协变量对生存时间的影响
 5. **高级生存分析技术**：时间依变协变量、竞争风险模型等
 
-生存分析作为一种强大的统计方法，在医学、生物学、工程学、社会学等领域有着广泛的应用。通过本教程的学习，您应该能够掌握生存分析的基本原理和R语言实现方法，并能够将其应用到实际研究中。
 
-## 十、附录：代码清单
+
+## 附录：代码清单
 
 这里提供了本教程中使用的所有主要函数，方便查阅和复习：
 
@@ -481,4 +577,3 @@ p8
 | ggcoxfunctional() | survminer | 可视化协变量函数形式 |
 | arrange_ggsurvplots() | survminer | 组合多个生存曲线图 |
 
-希望本教程对您的学习和研究有所帮助！如有任何问题或建议，请随时提出。

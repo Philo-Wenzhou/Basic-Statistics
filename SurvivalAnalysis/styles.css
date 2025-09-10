@@ -1,0 +1,219 @@
+/* 全局样式 */
+body {
+  font-family: 'Microsoft YaHei', 'SimHei', sans-serif;
+  line-height: 1.6;
+  color: #333;
+}
+
+/* 标题样式 */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Microsoft YaHei', 'SimHei', sans-serif;
+  color: #2c3e50;
+  font-weight: bold;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+}
+
+h1 {
+  font-size: 2.5em;
+  text-align: center;
+  padding-bottom: 0.5em;
+  border-bottom: 3px solid #3498db;
+  margin-bottom: 1em;
+}
+
+h2 {
+  font-size: 1.8em;
+  border-bottom: 2px solid #ecf0f1;
+  padding-bottom: 0.3em;
+}
+
+h3 {
+  font-size: 1.4em;
+  color: #3498db;
+}
+
+/* 段落样式 */
+p {
+  margin-bottom: 1em;
+  text-align: justify;
+}
+
+/* 表格样式 */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5em 0;
+  font-size: 0.95em;
+}
+
+th, td {
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+th {
+  background-color: #3498db;
+  color: white;
+  font-weight: bold;
+}
+
+tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+tr:hover {
+  background-color: #e8f4f8;
+}
+
+/* 代码块样式 */
+pre {
+  background-color: #f8f8f8;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 1em;
+  overflow-x: auto;
+  font-family: 'Courier New', Courier, monospace;
+  margin: 1.5em 0;
+}
+
+code {
+  font-family: 'Courier New', Courier, monospace;
+  background-color: #f8f8f8;
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+/* 引用块样式 */
+blockquote {
+  border-left: 4px solid #3498db;
+  padding-left: 1em;
+  margin-left: 0;
+  color: #666;
+  font-style: italic;
+}
+
+/* 列表样式 */
+ul, ol {
+  margin-bottom: 1em;
+  padding-left: 1.5em;
+}
+
+li {
+  margin-bottom: 0.5em;
+}
+
+/* 目录样式 */
+.toc {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 1em;
+  margin: 1.5em 0;
+}
+
+.toc-title {
+  font-weight: bold;
+  margin-bottom: 0.5em;
+  color: #2c3e50;
+}
+
+.toc ul {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.toc li {
+  margin-bottom: 0.3em;
+}
+
+.toc a {
+  color: #3498db;
+  text-decoration: none;
+}
+
+.toc a:hover {
+  text-decoration: underline;
+  color: #2980b9;
+}
+
+/* 图表样式 */
+.figure {
+  margin: 2em 0;
+  text-align: center;
+}
+
+.figure img {
+  max-width: 100%;
+  height: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.caption {
+  margin-top: 0.5em;
+  font-style: italic;
+  color: #666;
+  font-size: 0.9em;
+}
+
+/* 代码折叠按钮 */
+.code-folding-btn {
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 0.2em 0.5em;
+  font-size: 0.8em;
+  cursor: pointer;
+  margin-bottom: 0.5em;
+}
+
+.code-folding-btn:hover {
+  background-color: #e8e8e8;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  body {
+    font-size: 16px;
+  }
+  
+  h1 {
+    font-size: 2em;
+  }
+  
+  h2 {
+    font-size: 1.5em;
+  }
+  
+  h3 {
+    font-size: 1.2em;
+  }
+  
+  table {
+    font-size: 0.85em;
+  }
+  
+  th, td {
+    padding: 8px 10px;
+  }
+}
+
+/* 打印样式 */
+@media print {
+  body {
+    font-size: 12pt;
+  }
+  
+  .toc {
+    display: none;
+  }
+  
+  pre, code {
+    font-family: 'Courier New', Courier, monospace;
+    white-space: pre-wrap;
+  }
+}

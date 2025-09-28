@@ -16,6 +16,8 @@
      css: styles.css
 ---
 
+<!-- 注意：此文件已配置所有图表以PNG格式输出到output目录，方便引用到微信公众号 -->
+
 ```{r setup, include=FALSE}
 # 设置全局参数
 knitr::opts_chunk$set(
@@ -30,11 +32,23 @@ knitr::opts_chunk$set(
   fig.path = "output/",
   # 设置图片格式为PNG
   dev = function(filename, width, height, ...) {
+    # 确保output目录存在
+    if (!dir.exists("output")) dir.create("output")
     png(filename = filename, width = width, height = height, res = 300, units = "in", ...)
   },
   # 设置表格格式为三线表
   results = "asis"
 )
+
+# 定义保存PNG图片的函数
+save_png <- function(plot_obj, filename, width=8, height=6, dpi=300) {
+  # 确保output目录存在
+  if (!dir.exists("output")) dir.create("output")
+  png(filename = paste0("output/", filename), width = width, height = height, res = dpi, units = "in")
+  print(plot_obj)
+  dev.off()
+  return(plot_obj) # 返回图表对象以便在文档中显示
+}
 
 # 设置表格输出格式
 options(knitr.kable.NA = '', knitr.table.format = "markdown")
@@ -151,28 +165,64 @@ theme_survival <- function() {
 让通过R代码来直观地理解这些分布：
 
 ```{r distribution_functions}
-# 定义分布函数
-h_exp <- function(t, lambda) lambda
-S_exp <- function(t, lambda) exp(-lambda * t)
+# 生存分析常用分布（指数分布、Weibull分布）生存函数可视化
+# 1. 定义分布的核心函数（风险函数h、生存函数S）
+# 指数分布：风险恒定
+h_exp <- function(t, lambda) lambda  # 指数分布风险函数（lambda为常数风险率）
+S_exp <- function(t, lambda) exp(-lambda * t)  # 指数分布生存函数
 
-h_weibull <- function(t, lambda, k) k * lambda * (lambda * t)^(k-1)
-S_weibull <- function(t, lambda, k) exp(-(lambda * t)^k)
+# Weibull分布：风险随时间变化（k为形状参数，lambda为尺度参数）
+h_weibull <- function(t, lambda, k) k * lambda * (lambda * t)^(k-1)  # Weibull风险函数
+S_weibull <- function(t, lambda, k) exp(-(lambda * t)^k)  # Weibull生存函数
 
-# 绘制生存函数曲线
-t <- seq(0, 5, length = 100)
-lambda <- 1
+# 2. 设置绘图参数与数据
+t <- seq(0, 5, length = 100)  # 生成时间序列：从0到5，共100个等间隔时间点（模拟时间维度）
+lambda <- 1  # 设定尺度参数lambda=1（简化计算，不影响分布趋势）
 
-par(mfrow = c(1, 2))
-plot(t, S_exp(t, lambda), type = "l", main = "指数分布生存函数", 
-     xlab = "时间t", ylab = "S(t)", ylim = c(0, 1))
+# 3. 绘制双面板生存曲线（左：指数分布；右：不同形状参数的Weibull分布）
+par(mfrow = c(1, 2))  # 设置绘图布局：1行2列（左右两个子图）
+# 左图：指数分布生存曲线
+plot(t, S_exp(t, lambda), type = "l",  # type="l"表示绘制折线图
+     main = "指数分布生存函数",  # 子图标题
+     xlab = "时间t",  # x轴标签（时间）
+     ylab = "S(t)（生存概率）",  # y轴标签（生存函数值）
+     ylim = c(0, 1))  # y轴范围（生存概率0~1）
 
-plot(t, S_weibull(t, lambda, k=0.5), type = "l", col = "blue", 
-     main = "Weibull分布生存函数", xlab = "时间t", ylab = "S(t)", ylim = c(0, 1))
-lines(t, S_weibull(t, lambda, k=1), col = "red")  # 等同于指数分布
-lines(t, S_weibull(t, lambda, k=2), col = "green")
+# 右图：不同形状参数k的Weibull分布生存曲线
+plot(t, S_weibull(t, lambda, k=0.5), type = "l", col = "blue",  # k=0.5，蓝色线
+     main = "Weibull分布生存函数（不同k值）", 
+     xlab = "时间t", 
+     ylab = "S(t)（生存概率）", 
+     ylim = c(0, 1))
+lines(t, S_weibull(t, lambda, k=1), col = "red")  # k=1，红色线（等同于指数分布）
+lines(t, S_weibull(t, lambda, k=2), col = "green")  # k=2，绿色线
+# 添加图例：说明不同颜色对应的k值
 legend("topright", legend = c("k=0.5", "k=1", "k=2"), 
-       col = c("blue", "red", "green"), lty = 1)
-par(mfrow = c(1, 1))
+       col = c("blue", "red", "green"), lty = 1)  # lty=1表示实线
+
+
+png("output/distribution_functions.png",width = 20,height = 10,res = 500,units = "cm")
+# 3. 绘制双面板生存曲线（左：指数分布；右：不同形状参数的Weibull分布）
+par(mfrow = c(1, 2))  # 设置绘图布局：1行2列（左右两个子图）
+# 左图：指数分布生存曲线
+plot(t, S_exp(t, lambda), type = "l",  # type="l"表示绘制折线图
+     main = "指数分布生存函数",  # 子图标题
+     xlab = "时间t",  # x轴标签（时间）
+     ylab = "S(t)（生存概率）",  # y轴标签（生存函数值）
+     ylim = c(0, 1))  # y轴范围（生存概率0~1）
+
+# 右图：不同形状参数k的Weibull分布生存曲线
+plot(t, S_weibull(t, lambda, k=0.5), type = "l", col = "blue",  # k=0.5，蓝色线
+     main = "Weibull分布生存函数（不同k值）", 
+     xlab = "时间t", 
+     ylab = "S(t)（生存概率）", 
+     ylim = c(0, 1))
+lines(t, S_weibull(t, lambda, k=1), col = "red")  # k=1，红色线（等同于指数分布）
+lines(t, S_weibull(t, lambda, k=2), col = "green")  # k=2，绿色线
+# 添加图例：说明不同颜色对应的k值
+legend("topright", legend = c("k=0.5", "k=1", "k=2"), 
+       col = c("blue", "red", "green"), lty = 1)  # lty=1表示实线
+dev.off()
 ```
 
 ## R包安装与加载
@@ -256,7 +306,27 @@ head(surv_object)
 ```
 
 这里，`time`参数表示生存时间，`event`参数表示事件状态（通常1表示事件发生，0表示删失）。
+在代码中通过 `Surv(time = lung$time, event = lung$status)` 创建的“生存对象”，是生存分析的核心数据载体——它整合了**生存时间**和**事件状态**两大关键信息，输出结果 `[1]  306   455  1010+  210   883  1022+` 中每个数值的含义如下：
 
+生存对象的输出有一个关键标识：**数值后带“+”表示“删失数据”，无“+”表示“事件发生数据”**，具体定义基于 `lung` 数据集的参数：
+- `time = lung$time`：生存时间，单位为“天”（数据集默认定义）；
+- `event = lung$status`：事件状态（`lung` 数据集约定：1=发生结局事件（如患者死亡），0=删失（如患者失访、研究结束时未死亡））。
+
+
+| 生存对象输出 | 实际含义（对应前6个肺癌患者数据） |
+|--------------|-----------------------------------|
+| 306          | 该患者**发生结局事件**（死亡），实际生存时间为306天 |
+| 455          | 该患者**发生结局事件**（死亡），实际生存时间为455天 |
+| 1010+        | 该患者为**删失数据**（未发生死亡）：最后一次随访时间为1010天，之后未再追踪到（如失访），无法确定实际生存时间（实际生存时间≥1010天） |
+| 210          | 该患者**发生结局事件**（死亡），实际生存时间为210天 |
+| 883          | 该患者**发生结局事件**（死亡），实际生存时间为883天 |
+| 1022+        | 该患者为**删失数据**（未发生死亡）：最后一次随访时间为1022天，之后失访或研究结束，实际生存时间≥1022天 |
+
+生存对象的核心作用是“标记删失数据”，这对后续分析（如Kaplan-Meier生存曲线）至关重要：
+- 无“+”的事件数据：会参与“生存概率下降”的计算（如306天死亡，会让对应时间点的生存概率降低）；
+- 带“+”的删失数据：仅表示“该时间点仍存活”，不会让生存概率下降，仅用于调整“风险人数”（如1010+的患者，在1010天前会被计入“风险人群”，1010天后不再计入）。
+
+简单来说，生存对象通过“+号”清晰区分了“确定的生存时间”和“不确定的随访时间”，是生存分析处理删失数据的基础。
 ### 基础KM分析
 
 接下来，使用`survfit()`函数进行Kaplan-Meier估计：
@@ -270,6 +340,57 @@ summary(km_fit)
 
 `survfit()`函数的第一个参数是一个公式，`~ 1`表示不考虑分组因素，即对整个样本进行估计。
 
+通过 `survfit(surv_object ~ 1, data = lung)` 得到的是**肺癌患者全体的Kaplan-Meier生存函数估计结果**（`~1` 表示不分组，分析所有患者的整体生存情况）。输出表格中每一列都对应生存分析的核心指标，输出表格共7列，每一列都服务于“描述生存概率随时间的变化”，具体定义如下：
+
+| 列名                | 含义                                                                 |
+|---------------------|----------------------------------------------------------------------|
+| `time`              | 发生“死亡事件”的具体时间点（仅保留有死亡发生的时间，删失时间不显示） |
+| `n.risk`            | 在该时间点**之前**仍存活、且未删失的患者数（即“风险人群数”）         |
+| `n.event`           | 在该时间点发生死亡的患者数                                           |
+| `survival`          | 截至该时间点的**Kaplan-Meier生存概率**（即存活超过该时间的概率）     |
+| `std.err`           | 生存概率的标准误差（反映估计的精度，值越小越精确）                   |
+| `lower 95% CI`      | 生存概率的95%置信区间下限（真实生存概率有95%可能≥此值）             |
+| `upper 95% CI`      | 生存概率的95%置信区间上限（真实生存概率有95%可能≤此值）             |
+
+
+我挑表格中**有代表性的时间点**举例，带你理解“生存概率如何随时间变化”，以及各指标的联动关系：
+
+1. 早期时间点（如`time=5`天）：低死亡风险，生存概率接近1
+- `time=5`：第5天有1名患者死亡；
+- `n.risk=228`：第5天前，共有228名患者存活且未删失（即初始风险人群规模接近228人）；
+- `n.event=1`：第5天仅1人死亡；
+- `survival=0.9956`：截至第5天，患者存活超过5天的概率为99.56%（计算逻辑：1 - 1/228 ≈ 0.9956）；
+- 置信区间`[0.9871, 1.000]`：真实生存概率有95%可能在98.71%~100%之间，估计精度极高（因早期样本量大）。
+
+2. 中期时间点（如`time=306`天）：生存概率降至50%左右（中位生存期）
+- `time=306`：第306天有1名患者死亡；
+- `n.risk=86`：第306天前，仅剩86名患者仍存活且未删失（近半数患者已死亡或删失）；
+- `n.event=1`：第306天1人死亡；
+- `survival=0.5070`：截至第306天，患者存活超过306天的概率为50.7%——这接近**中位生存期**（生存概率降至50%的时间，是评估预后的核心指标），说明肺癌患者的中位生存期约为300天左右；
+- 置信区间`[0.4427, 0.581]`：较早期变宽，但仍在合理范围，估计精度可接受。
+
+3. 晚期时间点（如`time=883`天）：样本量减少，生存概率低且精度下降
+- `time=883`：第883天有1名患者死亡；
+- `n.risk=4`：第883天前，仅4名患者仍存活且未删失（大部分患者已死亡）；
+- `n.event=1`：第883天1人死亡；
+- `survival=0.0503`：截至第883天，患者存活超过883天的概率仅为5.03%（即100人中仅约5人能存活超过883天）；
+- 置信区间`[0.0207, 0.123]`：显著变宽（因样本量极少），估计精度下降，此时的生存概率仅作参考。
+
+从完整表格数据可提炼出肺癌患者**整体生存特征**：
+1. **生存概率持续下降**：从第5天的99.56%，逐步降至第883天的5.03%，符合“疾病进展导致存活概率随时间降低”的客观规律；
+2. **风险人群逐步减少**：`n.risk`从初始的228人，逐步降至晚期的4人，减少的原因包括“死亡”（主要）和“删失”（如失访、研究结束）；
+3. **早期死亡风险较低，中期下降加速**：前50天内生存概率下降缓慢（如第59天仍有93.42%），50~300天下降速度加快（300天左右降至50%），300天后下降速度放缓（因剩余患者已属于“预后较好的少数群体”）；
+4. **估计精度随时间降低**：早期（如前100天）置信区间窄，生存概率估计精确；晚期（如500天后）置信区间宽，因样本量少，估计不确定性增加。
+
+如果想直接获取“中位生存期”等核心指标，无需手动在表格中找，可运行以下代码：
+```{r}
+# 提取KM估计的关键统计量（含中位生存期）
+surv_summary <- summary(km_fit, times = c(median(km_fit$time), 300, 500, 800))
+# 或直接用 survminer 包的函数自动计算
+survminer::surv_median(km_fit)
+```
+运行后会直接输出“中位生存期”及95%置信区间，比手动查表更高效准确。
+
 ### 分组KM分析
 
 可以按不同的因素（如性别）对样本进行分组，比较不同组之间的生存差异：
@@ -277,7 +398,6 @@ summary(km_fit)
 ```{r grouped_km_analysis}
 # 分组KM分析（按性别）
 km_fit_sex <- survfit(surv_object ~ sex, data = lung)
-cat("按性别分组的KM估计结果摘要：\n")
 summary(km_fit_sex)
 ```
 
@@ -302,6 +422,10 @@ p1 <- ggsurvplot(
   ggtheme = theme_bw()        # 使用黑白主题
 )
 p1
+
+png("output/km_overall.png",width = 10,height = 12,res = 500,units = "cm")
+p1
+dev.off()
 ```
 **图1：肺癌患者总体Kaplan-Meier生存曲线** 该图展示了肺癌患者的整体生存情况。生存曲线随着时间的推移逐渐下降，表示患者存活到特定时间点的概率逐渐降低。风险表显示了不同时间点的风险人数。
 
@@ -325,7 +449,9 @@ p2 <- ggsurvplot(
 )
 p2
 
-
+png("output/km_by_sex.png",width = 12,height = 14,res = 500,units = "cm")
+p2
+dev.off()
 ```
 **图2：按性别分组的肺癌患者生存曲线** 该图展示了肺癌患者中男性和女性的生存曲线比较。从图中可以看出，女性患者的生存曲线整体高于男性患者，提示性别可能是影响肺癌患者预后的一个因素。图下方的风险表显示了不同时间点各组的风险人数。
 
@@ -392,6 +518,28 @@ summary(cox1)
 - **风险比（exp(coef)）**：表示协变量每增加一个单位，风险增加的倍数
 - **p值**：表示协变量的统计显著性
 
+
+
+
+#### 1. 模型基本信息
+- 分析样本：共228例患者，其中165例发生了结局事件（如死亡）。
+- 模型关注：性别（sex）对“生存时间（time）”和“结局事件（status）”的影响。
+
+
+#### 2. 性别对生存风险的影响
+- **风险比（HR）**：女性的HR=0.588  
+  意味着：在其他条件相同的情况下，女性的结局事件（如死亡）风险是男性的58.8%（即女性风险比男性低约41.2%）。
+  
+- **显著性**：P=0.00149（**表示显著**），且95%置信区间（0.4237~0.816）不包含1，说明“女性风险低于男性”的差异具有明确统计学意义。
+
+
+#### 3. 模型整体效果
+- **区分能力**：一致性指数（Concordance）=0.579，略高于0.5（随机水平），说明仅用性别预测生存的区分能力较弱（但显著优于随机）。
+- **模型显著性**：三种检验（似然比、Wald、Score）的P值均为0.001，表明“性别”这一变量能显著预测患者的生存风险。
+
+
+在仅考虑性别的情况下，女性肺癌患者的生存风险显著低于男性（风险降低约41%），且这一差异具有统计学意义，但仅用性别预测生存的区分能力有限。
+
 ### 多变量Cox回归
 
 可以在模型中包含多个协变量，进行多变量生存分析：
@@ -417,7 +565,31 @@ test_ph
 p5 <- ggcoxzph(test_ph, se = TRUE)
 p5
 
+
+
+png("output/ph_test.png",width = 25,height = 16,res = 500,units = "cm")
+p5
+dev.off()
 ```
+这张图是**Schoenfeld残差图**，用于检验Cox回归模型的**比例风险假设（Proportional Hazards Assumption）**——即“协变量对风险的影响不随时间改变”这一核心假设是否成立。解读如下：
+
+
+### 1. 整体检验（Global Schoenfeld Test）
+顶部标注：`Global Schoenfeld Test p: 0.3137`
+- \( p = 0.3137 > 0.05 \)，说明**整体上模型满足比例风险假设**，即所有协变量的“风险效应”未随时间发生系统性变化。
+
+
+### 2. 单个协变量的检验（Schoenfeld Individual Test）
+四个子图分别对应4个协变量（`sex`、`age`、`ph.ecog`、`wt.loss`），每个子图标题为该协变量的检验\( p \)值，同时通过“残差点+平滑曲线”判断趋势：
+
+- **性别（sex，左上）**：\( p = 0.1021 > 0.05 \)，残差点围绕平滑曲线（黑色实线）随机分布，无明显上升/下降趋势 → 满足比例风险假设。
+- **年龄（age，右上）**：\( p = 0.5094 > 0.05 \)，残差点与平滑曲线均无时间趋势 → 满足比例风险假设。
+- **ECOG体力状态（ph.ecog，左下）**：\( p = 0.2009 > 0.05 \)，虽残差点有波动，但平滑曲线无明确时间趋势 → 满足比例风险假设。
+- **体重减轻（wt.loss，右下）**：\( p = 0.8307 > 0.05 \)，残差点与平滑曲线几乎水平 → 满足比例风险假设。
+
+
+### 结论
+**该Cox回归模型的比例风险假设成立**（整体与单个协变量检验的\( p \)值均>0.05，且残差无时间趋势），模型前提假设满足，结果可靠性有保障。
 **图3：比例风险假设检验结果** 该图展示了Cox比例风险模型的比例风险假设检验结果。图中的曲线应该大致呈水平状态，没有明显的趋势，才能支持比例风险假设。从图中可以看出，的模型基本满足比例风险假设。
 
 如果p值大于0.05，通常认为比例风险假设成立。
@@ -431,55 +603,128 @@ p5
 p6 <- ggforest(
   cox2, 
   data = lung,
-  main = "多变量Cox回归模型的森林图",
-  cpositions = c(0.02, 0.1, 0.22),
-  fontsize = 1.0,
-  refLabel = "参考",
-  noDigits = 3
+  main = "多变量Cox回归模型的森林图"
 )
 p6
 
-
+png("output/forest_plot.png",width = 14,height =10,res = 500,units = "cm")
+p6
+dev.off()
 ```
 **图4：Cox比例风险模型的森林图** 该森林图展示了多变量Cox回归模型中各个协变量的风险比（HR）及其95%置信区间。森林图是展示Cox回归结果的常用方式，能够直观地显示每个协变量对生存时间的影响方向和强度。
+这张多变量Cox回归模型的森林图表明：女性（风险比HR=0.55，P<0.001）是生存的保护因素，ph.ecog评分（HR=1.67，P<0.001）越高生存风险越高，而年龄、体重减轻对生存无显著影响。
+
 ## 高级生存分析技术
 
 ### 时间依变协变量
 
-在某些情况下，协变量的值可能随时间变化，这时需要使用时间依变协变量模型：
+在某些情况下，协变量的值可能随时间变化，这时需要使用时间依变协变量模型.
+以下基于 veteran（肺癌老兵） 和 cancer（癌症随访） 两个 R 自带数据集，分别改造并实现时间依变协变量 Cox 模型和竞争风险模型，代码可直接运行，且贴合临床数据逻辑：
 
 ```{r time_dependent_covariates}
-# 创建时间依变协变量的Cox模型
-# 这里使用模拟数据演示概念
-set.seed(123)
-n <- 100
-time <- runif(n, 1, 100)
-event <- rbinom(n, 1, 0.5)
-covariate1 <- rnorm(n)
-covariate2 <- rnorm(n)
+# 1. 加载必需包
+library(survival)  # 自带生存分析工具，含veteran数据集
+veteran  # 加载肺癌老兵数据
+data(cancer, package="survival")
 
-# 创建时间依变协变量数据
-data_temp <- data.frame(
-  id = 1:n,
-  time = time,
-  event = event,
-  covariate1 = covariate1,
-  covariate2 = covariate2
+# 2. 数据预处理：添加id、排除缺失、计算中位生存时间
+veteran_td <- veteran %>%
+  mutate(
+    id = 1:nrow(.),  # 手动添加患者ID（关键：标识同一患者的不同时间区间）
+    status = as.integer(status)  # 确保事件状态为整数（1=死亡，0=删失）
+  ) %>%
+  na.omit()  # 排除缺失值
+
+median_surv <- median(veteran_td$time)  # 计算中位生存时间（约120天）
+
+# 3. 构造时间依变数据：拆分随访区间
+veteran_td_split <- lapply(unique(veteran_td$id), function(pat_id) {
+  # 提取单个患者数据
+  pat <- veteran_td[veteran_td$id == pat_id, ]
+  
+  # 第一段区间：start=0，stop=min(中位时间, 患者实际生存时间)
+  seg1 <- data.frame(
+    id = pat$id,
+    start = 0,
+    stop = min(median_surv, pat$time),
+    status = ifelse(pat$time <= median_surv, pat$status, 0),  # 事件若在第一段发生，标记为1
+    trt = pat$trt,  # 治疗组（1=标准，2=试验）
+    age = pat$age,  # 年龄（固定协变量，不随时间变）
+    karno = pat$karno  # 第一段体力评分（原始值）
+  )
+  
+  # 第二段区间：仅对随访超中位时间的患者，start=中位时间，stop=实际时间
+  if (pat$time > median_surv) {
+    seg2 <- data.frame(
+      id = pat$id,
+      start = median_surv,
+      stop = pat$time,
+      status = pat$status,  # 事件若在第二段发生，标记为1
+      trt = pat$trt,
+      age = pat$age,
+      karno = pat$karno - 8  # 时间依变：第二段体力评分降低8分（模拟随时间下降）
+    )
+    return(rbind(seg1, seg2))  # 合并两段数据
+  } else {
+    return(seg1)  # 仅返回第一段
+  }
+}) %>% do.call(rbind, .)  # 合并所有患者的区间数据
+
+# 4. 拟合时间依变协变量Cox模型
+td_cox_model <- coxph(
+  formula = Surv(start, stop, status) ~ trt + age + karno,  # karno为时间依变协变量
+  data = veteran_td_split
 )
 
-# 演示时间依变协变量的模型设置
-cat("时间依变协变量的模型设置示例：\n")
-cat("model <- coxph(Surv(start, stop, event) ~ covariate1 + covariate2, data = time_dependent_data)")
+# 5. 查看结果（重点关注karno的风险比）
+cat("=== 时间依变协变量Cox模型结果 ===\n")
+summary(td_cox_model)
+
+# 提取风险比及95%置信区间（更易解读）
+cat("\n=== 风险比（HR）及95%置信区间 ===\n")
+exp(cbind(HR = coef(td_cox_model), confint(td_cox_model)))
 ```
 
 ### 竞争风险模型
 
-在实际研究中，可能存在多种可能导致观察结束的事件（如患者可能死于其他疾病而不是研究关注的疾病），这时需要使用竞争风险模型：
+在实际研究中，可能存在多种可能导致观察结束的事件（如患者可能死于其他疾病而不是研究关注的疾病），这时需要使用竞争风险模型.
 
 ```{r competing_risks}
-# 演示竞争风险模型的概念
-cat("竞争风险模型的模型设置示例：\n")
-cat("cmprsk_model <- coxph(Surv(time, status) ~ covariate1 + covariate2, data = data, cluster = id)")
+library(cmprsk)
+library(survival)
+library(dplyr)  # 确保加载dplyr用于数据处理
+
+# 1. 加载数据并预处理（彻底移除NA+协变量数值化）
+data(cancer)
+cancer_cr <- cancer %>%
+  select(time, status, age, sex, ph.ecog) %>%
+  # 第一步：先移除所有原始变量的缺失值（避免后续计算产生NA）
+  drop_na() %>%
+  # 2. 重新编码事件状态（确保覆盖所有情况）
+  mutate(
+    event = case_when(
+      status == 1 ~ 0,                     # 原status=1：删失
+      status == 2 & ph.ecog >= 1 ~ 1,      # 关注事件：肺癌死亡
+      status == 2 & ph.ecog == 0 ~ 2,      # 竞争事件：其他死亡
+      TRUE ~ 99                            # 捕获所有未覆盖的情况（后续过滤）
+    ),
+    sex = as.numeric(sex) - 1,             # 性别转为数值（0=Male，1=Female，避免因子）
+    ph.ecog = as.numeric(ph.ecog)          # 体力评分转为数值（0/1/2/3，移除因子格式）
+  ) %>%
+  filter(event != 99) %>%                  # 排除异常事件编码
+  drop_na()  # 再次确保无NA（双重保险）
+
+# 3. 拟合竞争风险模型（协变量均为数值型且无NA）
+cr_model <- crr(
+  ftime = cancer_cr$time,
+  fstatus = cancer_cr$event,
+  cov1 = as.matrix(cancer_cr[, c("age", "sex", "ph.ecog")]),  # 显式转换为矩阵（避免因子问题）
+  failcode = 1
+)
+
+# 查看结果
+summary(cr_model)
+exp(cbind(SHR = coef(cr_model), confint(cr_model)))
 ```
 
 ## 生存分析结果的可视化展示
@@ -510,15 +755,22 @@ p4 <- ggsurvplot(
   ggtheme = theme_bw()
 )
 
+
+png("output/aml_km.png",width = 10,height =14,res = 500,units = "cm")
 p4
+dev.off()
 ```
 
 **图5：AML患者不同治疗方案的生存曲线比较** 该图比较了AML（急性髓系白血病）患者中维持治疗和非维持治疗两种方案的生存曲线。Log-rank检验的p值表明两组生存曲线差异具有统计学意义。
 ```{r combined_plots}
 # 组合生存曲线图
 p_list <- list(p2, p4)
-arrange_ggsurvplots(p_list, ncol = 2, nrow = 1)
-
+combined_plot <- arrange_ggsurvplots(p_list, ncol = 2, nrow = 1)
+combined_plot
+# 保存PNG图片到output目录
+png("output/combined_plot.png",width = 20,height =10,res = 500,units = "cm")
+combined_plot
+dev.off()
 ```
 **图6：组合生存曲线图** 该图组合了肺癌患者按性别分组的生存曲线和AML患者按治疗方案分组的生存曲线，方便直观比较不同数据集的生存分析结果。组合图对于展示多个相关分析结果非常有用。
 
@@ -543,7 +795,12 @@ p8 <- ggcoxfunctional(
 )
 
 # 显示图形
-print(p8)
+p8
+
+# 保存PNG图片到output目录
+png("output/hazard_function.png",width = 10,height =25,res = 500,units = "cm")
+p8
+dev.off()
 ```
 **图7：协变量与风险之间的函数关系图** 该图展示了各个协变量与风险之间的函数关系，用于评估协变量是否需要进行函数转换。图中曲线应该大致呈线性，才能支持协变量与风险之间的线性关系假设。
 

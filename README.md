@@ -1,8 +1,8 @@
-# 基础统计学与R语言：美丽数据可视化指南
+# 基础统计学与 R / Python：可视化与算法实现指南
 
 ## 项目概述
 
-这是一份精心设计的基础统计学教程，结合了R语言强大的数据可视化能力。本教程通过实际可执行的代码、精美的图表和清晰的数学解释，帮助学习者掌握统计学的核心概念和数据可视化技巧。
+这是一份精心设计的基础统计学教程，结合了 **R 语言可视化** 与 **Python 算法实现**。项目通过可执行代码、图表和数学解释，帮助学习者掌握统计学核心概念，并理解如何在不同语言中落地。
 
 ## 主要特点
 
@@ -15,11 +15,14 @@
 ## 项目结构
 
 ```
-├── 1 Basic Statistics.r   # 主R代码文件
-├── README.md              # 项目说明文档
-├── input/                 # 输入数据目录
-│   └── exam_scores.csv    # 学生考试成绩数据集
-└── output/                # 输出图表目录
+├── 1 Basic Statistics.r                  # 主 R 代码文件（可视化与统计分析）
+├── README.md                             # 项目说明文档
+├── python/
+│   ├── basic_statistics_algorithms.py    # Python 版基础统计学算法
+│   └── basic_statistics_notes.md         # Python 版统计学笔记
+├── input/                                # 输入数据目录
+│   └── exam_scores.csv                   # 学生考试成绩数据集
+└── output/                               # 输出图表目录
     ├── distribution_comparison.png       # 分布对比图
     ├── exam_analysis_plots.png           # 考试分析组合图
     ├── class_comparison.png              # 班级对比图
@@ -57,6 +60,11 @@
 - 雷达图：多维度数据对比
 - 自定义主题和颜色方案
 
+### 6. Python 版统计学算法与笔记（新增）
+- 使用 **Python 标准库** 实现基础统计学常用算法（零第三方依赖）
+- 覆盖描述性统计、相关分析、t 检验与单因素方差分析
+- 提供配套中文笔记，方便“公式 - 代码 - 解释”联动学习
+
 ## 使用方法
 
 1. 确保已安装R语言环境
@@ -64,6 +72,15 @@
 3. 在RStudio或其他R编辑器中运行代码
 4. 所有生成的图表将自动保存到`output`目录
 5. 示例数据将保存在`input`目录下，可单独加载使用
+
+### Python 运行方式
+
+1. 安装 Python 3.9+；
+2. 运行示例脚本（无需额外依赖）：
+
+```bash
+python3 python/basic_statistics_algorithms.py
+```
 
 ## 所需R包
 
